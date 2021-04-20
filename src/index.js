@@ -52,7 +52,7 @@ app.post('/todos', checksExistsUserAccount, (request, response) => {
   const todo = { 
     id: uuidv4(),
     title,
-    deadline, 
+    deadline: new Date(deadline), 
     done: false,
     created_at: new Date(),
   }
@@ -63,7 +63,12 @@ app.post('/todos', checksExistsUserAccount, (request, response) => {
 });
 
 app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { user } = request;
+  const { title, deadline } = request.body;
+
+  user.todos.map(todo => todo.id === id ? { ...todo, title, deadline } : todo);
+
+  return response.send();
 });
 
 app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
