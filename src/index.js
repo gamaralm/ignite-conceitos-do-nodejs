@@ -27,6 +27,12 @@ function checksExistsUserAccount(request, response, next) {
 app.post('/users', (request, response) => {
   const { name, username } = request.body;
 
+  const userExists = users.find(user => user.username === username);
+
+  if (userExists) {
+    return response.status(400).json({ error: 'User already exists' });
+  }
+
   const user = {
     id: uuidv4(),
     name, 
@@ -59,7 +65,7 @@ app.post('/todos', checksExistsUserAccount, (request, response) => {
 
   user.todos.push(todo);
 
-  return response.json(todo);
+  return response.status(201).json(todo);
 });
 
 app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
@@ -67,29 +73,46 @@ app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
   const { id } = request.params;
   const { title, deadline } = request.body;
 
-  user.todos.map(todo => todo.id === id ? { ...todo, title, deadline } : todo);
+  const todo = user.todos.find(todo => todo.id === id);
 
-  return response.send();
+  if (!todo) {
+    return response.status(404).json({ error: 'Todo was not found' });
+  }
+
+  todo.title = title;
+  todo.deadline = deadline;
+
+  return response.json(todo);
 });
 
 app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
   const { user } = request;
   const { id } = request.params;
 
-  user.todos.map(todo => todo.id === id ? { ...todo, done: true } : todo);
+  const todo = user.todos.find(todo => todo.id === id);
 
-  return response.send();
+  if (!todo) {
+    return response.status(404).json({ error: 'Todo was not found' });
+  }
+
+  todo.done = true;
+
+  return response.json(todo);
 });
 
 app.delete('/todos/:id', checksExistsUserAccount, (request, response) => {
   const { user } = request;
   const { id } = request.params;
 
-  const todoIndex = user.todos.findIndex(todo => todo.id === id);
+  const todo = user.todos.find(todo => todo.id === id);
 
-  user.todos.splice(todoIndex, 1);
+  if (!todo) {
+    return response.status(404).json({ error: 'Todo was not found' });
+  }
 
-  return response.send();
+  user.todos.splice(todo, 1);
+
+  return response.status(204).json();
 });
 
 module.exports = app;
